@@ -19,7 +19,7 @@ router.put("/:id", async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (post.userId === req.body.userId) {
-      await post.updateOne({ $set: req.body });
+      await post.updateOne( req.body);
       res.status(200).json("the post has been updated");
     } else {
       res.status(403).json("you can update only your post");
@@ -69,6 +69,19 @@ router.get("/:id", async (req, res) => {
     res.status(500).json(err);
   }
 });
+
+// get user all post
+router.get("/profile/:username", async (req, res) => {
+  try {
+    const user = await User.findOne({username:req.params.username});
+    const posts = await Post.find({userId:user._id});
+    res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+
 
 //get timeline posts
 

@@ -1,13 +1,50 @@
 import "./post.scss";
 import { MoreVert } from "@mui/icons-material";
-import { Users } from "../../dummyData";
-import { useState } from "react";
+// import { Users } from "../../dummyData";
+import { useState,useEffect } from "react";
+import axios from "axios";
+import {format} from "timeago.js"
+import { Link } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
-export default function Post({ post }) {
-  const [like,setLike] = useState(post.like)
+
+// const url = "http://localhost:3001/api/"
+
+
+
+export default function Post({ post,url }) {
+  const [like,setLike] = useState(post.likes.length)
   const [isLiked,setIsLiked] = useState(false)
+  // postUsername
+  const [user,setUser] = useState({}) 
+  const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+
+  // current username
+  const {user:currentUser} = useContext(AuthContext);
+
+  // fetch user
+  useEffect(()=>{
+    const fetchUser = async()=>{
+      // posts-user
+      const res = await axios.get(`${url}users?userId=${post.userId}`)
+      // console.log(res.data);
+      setUser(res.data);
+    }
+    fetchUser();
+  },[post.userId])
+
+  // Handle likes
+  useEffect(()=>{
+    setIsLiked(post.likes.includes(currentUser._id));
+  },[currentUser.id, post.likes])
 
   const likeHandler =()=>{
+    try{
+        axios.put(`${url}posts/${post._id}/like`,{userId:currentUser._id} );
+
+    }catch(err){}
+
     setLike(isLiked ? like-1 : like+1)
     setIsLiked(!isLiked)
   }
@@ -16,15 +53,17 @@ export default function Post({ post }) {
       <div className="postWrapper">
         <div className="postTop">
           <div className="postTopLeft">
-            <img
-              className="postProfileImg"
-              src={Users.filter((u) => u.id === post?.userId)[0].profilePicture}
-              alt=""
-            />
+            <Link to={`/profile/${user.username}`}>
+              <img
+                className="postProfileImg"
+                src={user.profilePicture || PF+"person/1.jpeg"}
+                alt=""
+                />
+            </Link>
             <span className="postUsername">
-              {Users.filter((u) => u.id === post?.userId)[0].username}
+              {user.username}
             </span>
-            <span className="postDate">{post.date}</span>
+            <span className="postDate">{format(post.createdAt)}</span>
           </div>
           <div className="postTopRight">
             <MoreVert />
@@ -32,12 +71,12 @@ export default function Post({ post }) {
         </div>
         <div className="postCenter">
           <span className="postText">{post?.desc}</span>
-          <img className="postImg" src={post.photo} alt="" />
+          <img className="postImg" src={PF+post.img} alt="" />
         </div>
         <div className="postBottom">
           <div className="postBottomLeft">
-            <img className="likeIcon" src="assets/like.png" onClick={likeHandler} alt="" />
-            <img className="likeIcon" src="assets/heart.png" onClick={likeHandler} alt="" />
+            <img className="likeIcon" src={`${PF}/like.png`} onClick={likeHandler} alt="" />
+            <img className="likeIcon" src={`${PF}/heart.png`}  onClick={likeHandler} alt="" />
             <span className="postLikeCounter">{like} people like it</span>
           </div>
           <div className="postBottomRight">
